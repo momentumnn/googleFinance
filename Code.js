@@ -82,7 +82,7 @@ function test(){
   trackExpenses(paylah);
   trackExpenses(rcvDbsIbanking);
   trackExpenses(shopback);
-
+  trackExpenses(grabRestaurant);
 }
 
 function trackExpenses(exp) {
