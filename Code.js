@@ -19,6 +19,8 @@ class PaymentCompany {
       const dateMatch = msg.getDate();
       const amountMatch = body.match(this.amountMatch);
       const vendorMatch = body.match(this.vendorMatch);
+        // Logger.log("Body: " + body + "\n");
+
       if (dateMatch && amountMatch && vendorMatch) {
         const rawDate = dateMatch[1]; // e.g., "29 Mar"
         const amount = amountMatch[1];
@@ -36,7 +38,6 @@ class PaymentCompany {
         // msg.markRead();
       }
       else {
-        Logger.log("Body: " + body + "\n");
         Logger.log("Date match: " + dateMatch+ "\n");
         Logger.log("Amount match: " + amountMatch+ "\n");
         Logger.log("Vendor match: " + vendorMatch + "\n");
@@ -54,35 +55,30 @@ class PaymentCompany {
 const PAYLAH_SUBJECT = "Transaction Alerts"
 const DBS_RCV_SUBJECT = "digibank Alerts - You've received a transfer"
 const DBS_PAY_SUBJECT = "iBanking Alerts"
+const SHOPBACK_SUBJECT = "Your ShopBack Pay receipt "
 const PAYLAH_EMAIL = "paylah.alert@dbs.com"
 const DBS_EMAIL = "ibanking.alert@dbs.com"
+const SHOPBACK_EMAIL = "hello@info.shopback.sg"
 
 const TIMEZONE = Session.getScriptTimeZone();
-const paylah = new PaymentCompany("Paylah", 
-                                  PAYLAH_EMAIL,
-                                  PAYLAH_SUBJECT, 
-                                  /Amount: SGD([\d.]+)/,
-                                  /To: (.*)/);
-const rcvDbsIbanking = new PaymentCompany("DBS In", 
-                                  DBS_EMAIL, 
-                                  DBS_RCV_SUBJECT, 
-                                  /received SGD ([\d.]+)/, 
-                                  /\* From:\*[\s\u200c]+(.*)\n/)
+const paylah = new PaymentCompany("Paylah", PAYLAH_EMAIL, PAYLAH_SUBJECT, /Amount: SGD([\d.]+)/, /To: (.*)/);
+const rcvDbsIbanking = new PaymentCompany("DBS In", DBS_EMAIL, DBS_RCV_SUBJECT, /received SGD ([\d.]+)/, /\* From:\*[\s\u200c]+(.*)\n/);
+const payDbsIbanking = new PaymentCompany("DBS Out", DBS_EMAIL, DBS_PAY_SUBJECT, /Amount:\s*SGD\s*([\d,.]+)/, /To:\s*(.*)/);
+const shopback = new PaymentCompany("Shopback", SHOPBACK_EMAIL, SHOPBACK_SUBJECT, /Total\s+paid\s+\$([\d.]+)/, /Payment\s+made\s+at:\s*\n\s*(.*)/ );
 
-const payDbsIbanking = new PaymentCompany("DBS Out",
-                                  DBS_EMAIL,
-                                  DBS_PAY_SUBJECT, 
-                                  /Amount:\s*SGD\s*([\d,.]+)/, 
-                                  /To:\s*(.*)/)
-
+function constant() {
+}
 
 function test(){
   trackExpenses(payDbsIbanking);
   trackExpenses(paylah);
   trackExpenses(rcvDbsIbanking);
+  trackExpenses(shopback);
+
 }
 
 function trackExpenses(exp) {
+  Logger.log("tracking " + exp.name);
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
   
   // 1. Search for unread PayLah emails (adjust the search query as needed)
@@ -104,7 +100,7 @@ function trackExpenses(exp) {
         sheet.appendRow(savedValues);
         msg.markRead();
       }
-      // Logger.log(savedValues);
+      Logger.log(savedValues);
     });
   });
 }
