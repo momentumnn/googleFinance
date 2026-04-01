@@ -19,15 +19,17 @@ class PaymentCompany {
       const dateMatch = msg.getDate();
       const amountMatch = body.match(this.amountMatch);
       const vendorMatch = body.match(this.vendorMatch);
-        // Logger.log("Body: " + body + "\n");
+      // Logger.log("Body: " + body + "\n");
 
       if (dateMatch && amountMatch && vendorMatch) {
-        const rawDate = dateMatch[1]; // e.g., "29 Mar"
         const amount = amountMatch[1];
         const vendor = vendorMatch[1].trim();
         
         // 3. Simple Categorization Logic
-        const category = getCategory(vendor);
+        let category = getCategory(vendor);
+        if (this.name =="Grab Restaurant") {
+          category = "Dining"
+        }
         const formattedDate = Utilities.formatDate(dateMatch, TIMEZONE, "dd-MMM-yyyy");
 
         // 4. Append to Sheet
@@ -38,6 +40,7 @@ class PaymentCompany {
         // msg.markRead();
       }
       else {
+        // Logger.log("Body: " + body + "\n"); 
         Logger.log("Date match: " + dateMatch+ "\n");
         Logger.log("Amount match: " + amountMatch+ "\n");
         Logger.log("Vendor match: " + vendorMatch + "\n");
@@ -56,17 +59,22 @@ const PAYLAH_SUBJECT = "Transaction Alerts"
 const DBS_RCV_SUBJECT = "digibank Alerts - You've received a transfer"
 const DBS_PAY_SUBJECT = "iBanking Alerts"
 const SHOPBACK_SUBJECT = "Your ShopBack Pay receipt "
+const GRAB_SUBJECT = "Your Grab E-Receipt"
+
 const PAYLAH_EMAIL = "paylah.alert@dbs.com"
 const DBS_EMAIL = "ibanking.alert@dbs.com"
 const SHOPBACK_EMAIL = "hello@info.shopback.sg"
+const GRAB_EMAIL = "no-reply@grab.com "
 
 const TIMEZONE = Session.getScriptTimeZone();
 const paylah = new PaymentCompany("Paylah", PAYLAH_EMAIL, PAYLAH_SUBJECT, /Amount: SGD([\d.]+)/, /To: (.*)/);
 const rcvDbsIbanking = new PaymentCompany("DBS In", DBS_EMAIL, DBS_RCV_SUBJECT, /received SGD ([\d.]+)/, /\* From:\*[\s\u200c]+(.*)\n/);
 const payDbsIbanking = new PaymentCompany("DBS Out", DBS_EMAIL, DBS_PAY_SUBJECT, /Amount:\s*SGD\s*([\d,.]+)/, /To:\s*(.*)/);
 const shopback = new PaymentCompany("Shopback", SHOPBACK_EMAIL, SHOPBACK_SUBJECT, /Total\s+paid\s+\$([\d.]+)/, /Payment\s+made\s+at:\s*\n\s*(.*)/ );
+const grabRestaurant = new PaymentCompany("Grab Restaurant", GRAB_EMAIL, GRAB_SUBJECT, /TOTAL\s+SGD\s*([\d.]+)/, /Restaurant:\s*([\s\S]*?)\n/);
 
 function constant() {
+  trackExpenses(grabRestaurant);
 }
 
 function test(){
